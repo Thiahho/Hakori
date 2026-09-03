@@ -1,0 +1,2 @@
+export const DROP_TARGET_DATE = "2026-09-27T20:00:00-03:00";
+export const DROP_TARGET_LABEL = "27.09.2026 · 20:00 ARG";

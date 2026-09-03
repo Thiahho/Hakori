@@ -1,0 +1,33 @@
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+*.env
+*.env.*
+
+# Credentials & keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+credentials.json
+service-account*.json
+*-service-account.json
+secrets.*
+*.secret
+
+# Cloud / deploy provider configs (can hold tokens)
+.vercel
+.netlify
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.idea/
