@@ -7,17 +7,17 @@ export function HeroSection() {
   return (
     <section
       id="drop"
-      className="relative flex min-h-screen items-center overflow-hidden pt-24"
+      className="relative flex min-h-[100svh] items-center overflow-hidden bg-ink pt-24"
     >
       <Image
-        src="/images/fondoweb.png"
+        src="/images/fondoweb.webp"
         alt="Monte Fuji, un torii y cerezos en flor"
         fill
         priority
-        className="scale-105 object-cover object-center"
         sizes="100vw"
+        className="scale-105 object-cover object-center"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-ink/75 via-ink/45 to-ink/10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/40 md:bg-gradient-to-r md:from-ink/75 md:via-ink/45 md:to-ink/10" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-6">
         <div className="flex items-center gap-4">

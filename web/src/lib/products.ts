@@ -19,8 +19,8 @@ export const products: Product[] = [
     name: "Katana Tee",
     price: 42000,
     description: "Oversize · Bordado premium",
-    image: "/images/katana-sinfondo.png",
-    storyImage: "/images/FINAL_KATANA.png",
+    image: "/images/katana-sinfondo.webp",
+    storyImage: "/images/FINAL_KATANA.webp",
     storyQuote: "La verdadera batalla siempre es contra uno mismo.",
     storyText:
       "Honor, disciplina y determinación. La fuerza no nace del acero, sino de quien decide levantarse una vez más.",
@@ -32,8 +32,8 @@ export const products: Product[] = [
     name: "Torii Tee",
     price: 42000,
     description: "Oversize · Bordado premium",
-    image: "/images/TORI-sinfondo.png",
-    storyImage: "/images/FINALTORIH.png",
+    image: "/images/TORI-sinfondo.webp",
+    storyImage: "/images/FINALTORIH.webp",
     storyQuote: "Hay lugares que no solo se atraviesan. Se sienten.",
     storyText:
       "El instante en el que dejás atrás una versión de vos mismo para convertirte en alguien mejor.",
@@ -45,8 +45,8 @@ export const products: Product[] = [
     name: "Sakura Tee",
     price: 42000,
     description: "Oversize · Bordado premium",
-    image: "/images/SAKURA-sinfondo.png",
-    storyImage: "/images/FINAL_Sakura.png",
+    image: "/images/SAKURA-sinfondo.webp",
+    storyImage: "/images/FINAL_Sakura.webp",
     storyQuote: "La belleza de la vida está en los momentos que no vuelven.",
     storyText:
       "Una pieza sobre renovación, presencia y la decisión de valorar aquello que existe ahora.",
@@ -58,8 +58,8 @@ export const products: Product[] = [
     name: "Monte Fuji Tee",
     price: 42000,
     description: "Oversize · Bordado premium",
-    image: "/images/MONTE-sinfondo.png",
-    storyImage: "/images/FINAL_MONTEFUJIH.png",
+    image: "/images/MONTE-sinfondo.webp",
+    storyImage: "/images/FINAL_MONTEFUJIH.webp",
     storyQuote: "Las cimas pertenecen a quienes nunca dejan de avanzar.",
     storyText:
       "Perseverancia, paciencia y un paso más. Incluso cuando la cima todavía parece lejana.",

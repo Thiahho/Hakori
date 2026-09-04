@@ -14,7 +14,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Hakori · Drop 001 — Japón",
+  title: "Hakori.Co ",
   description:
     "Hakori Drop 001. Primera colección inspirada en Japón. Cuatro símbolos, una misma historia. Edición limitada.",
 };

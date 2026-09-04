@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Product } from "@/lib/products";
 
 export function StorySection({
@@ -22,12 +23,12 @@ export function StorySection({
           &ldquo;{product.storyQuote}&rdquo;
         </p>
         <p className="max-w-md text-sm text-cream/70">{product.storyText}</p>
-        <a
-          href={`#${product.slug}`}
+        <Link
+          href={`/producto/${product.slug}`}
           className="text-xs uppercase tracking-widest text-cream underline decoration-cream/40 underline-offset-8 hover:decoration-cream"
         >
           Elegir esta pieza →
-        </a>
+        </Link>
       </div>
       <div
         className={`relative min-h-[320px] bg-ink-soft ${

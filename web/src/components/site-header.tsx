@@ -28,7 +28,7 @@ export function SiteHeader() {
           className="relative block h-6 w-32 sm:absolute sm:left-1/2 sm:-translate-x-1/2"
         >
           <Image
-            src="/images/HAKORI_BLANCO.png"
+            src="/images/HAKORI_BLANCO.webp"
             alt="Hakori"
             fill
             className="object-contain"
