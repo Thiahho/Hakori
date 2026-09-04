@@ -1,17 +1,32 @@
+import Link from "next/link";
 import { EmailCaptureForm } from "@/components/email-capture-form";
 
 const FOOTER_COLUMNS = [
   {
     title: "Políticas",
-    links: ["Envíos", "Cambios y devoluciones", "Canal legal", "Políticas de privacidad"],
+    links: [
+      { label: "Envíos", href: "#" },
+      { label: "Cambios y devoluciones", href: "#" },
+      { label: "Canal legal", href: "#" },
+      { label: "Políticas de privacidad", href: "/politicas/privacidad" },
+      { label: "Seguridad", href: "/politicas/seguridad" },
+    ],
   },
   {
     title: "General",
-    links: ["Centro de ayuda", "Cookies", "Contacto"],
+    links: [
+      { label: "Centro de ayuda", href: "#" },
+      { label: "Cookies", href: "/politicas/cookies" },
+      { label: "Contacto", href: "#" },
+      { label: "Cancelar suscripción", href: "/cancelar-suscripcion" },
+    ],
   },
   {
-    title: "RRSS",
-    links: ["Instagram", "TikTok", "WhatsApp"],
+    title: "REDES",
+    links: [
+      { label: "Instagram", href: "#" },
+      { label: "TikTok", href: "#" },
+    ],
   },
 ];
 
@@ -40,9 +55,12 @@ export function SiteFooter() {
                 className="mt-0.5 h-3.5 w-3.5 shrink-0 border-ink/40"
               />
               He leído y acepto la{" "}
-              <a href="#" className="underline underline-offset-2 hover:text-ink">
+              <Link
+                href="/politicas/privacidad"
+                className="underline underline-offset-2 hover:text-ink"
+              >
                 Política de Privacidad
-              </a>
+              </Link>
               .
             </label>
           </div>
@@ -55,10 +73,10 @@ export function SiteFooter() {
                 </p>
                 <ul className="mt-4 space-y-2 text-xs uppercase tracking-widest text-ink/60">
                   {column.links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="hover:text-ink">
-                        {link}
-                      </a>
+                    <li key={link.label}>
+                      <Link href={link.href} className="hover:text-ink">
+                        {link.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>

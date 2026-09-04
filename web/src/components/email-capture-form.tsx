@@ -15,6 +15,7 @@ export function EmailCaptureForm({
   submitLabel?: string;
 }) {
   const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
 
@@ -23,7 +24,7 @@ export function EmailCaptureForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("submitting");
-    const result = await subscribeEmail(email);
+    const result = await subscribeEmail(email, honeypot);
     if (result.ok) {
       setStatus("success");
       setError("");
@@ -45,6 +46,16 @@ export function EmailCaptureForm({
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
+      <input
+        type="text"
+        name="company"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute left-[-9999px] h-0 w-0 opacity-0"
+      />
       <div
         className={`flex items-end gap-4 border-b pb-2 ${
           isDark ? "border-cream/40" : "border-ink/30"
