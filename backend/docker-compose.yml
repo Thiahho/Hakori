@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: hakorico-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hakorico
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+    ports:
+      - "55432:5432"
+    volumes:
+      - hakorico-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  hakorico-postgres-data:

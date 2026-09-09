@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CartBadge } from "@/components/cart-badge";
 
 const NAV_LINKS = [
   { href: "/#drop", label: "Drop 001" },
@@ -43,12 +44,7 @@ export function SiteHeader() {
             priority
           />
         </Link>
-        <div className="flex items-center gap-2 text-xs uppercase tracking-widest">
-          <span className="hidden sm:inline">Carrito</span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cream text-[10px] text-ink">
-            0
-          </span>
-        </div>
+        <CartBadge />
       </div>
     </header>
   );

@@ -1,0 +1,46 @@
+@page "/Admin/Products/{id:guid}"
+@model HakoriCo.Api.Pages.Admin.Products.EditModel
+@{
+    ViewData["Title"] = "Editar " + Model.Product?.Name;
+}
+<h1>@Model.Product?.Name</h1>
+@if (Model.Message is not null)
+{
+    <div class="alert success">@Model.Message</div>
+}
+<form method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="card">
+        <div class="field">
+            <label>Precio (ARS)</label>
+            <input type="number" step="1" min="0" asp-for="Price" />
+        </div>
+        <div class="field">
+            <label><input type="checkbox" asp-for="IsActive" style="width:auto" /> Activo</label>
+        </div>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead><tr><th>Talle</th><th>SKU</th><th>Stock</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Variants.Count; i++)
+            {
+                <tr>
+                    <td>@Model.Variants[i].Size</td>
+                    <td>@Model.Variants[i].Sku</td>
+                    <td>
+                        <input type="hidden" asp-for="Variants[i].Id" />
+                        <input type="hidden" asp-for="Variants[i].Size" />
+                        <input type="hidden" asp-for="Variants[i].Sku" />
+                        <input type="number" min="0" asp-for="Variants[i].Stock" />
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <button type="submit">Guardar</button>
+    <a class="btn secondary" href="/admin/products">Volver</a>
+</form>

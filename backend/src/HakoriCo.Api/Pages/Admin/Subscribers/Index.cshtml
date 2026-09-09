@@ -1,0 +1,27 @@
+@page
+@model HakoriCo.Api.Pages.Admin.Subscribers.IndexModel
+@{
+    ViewData["Title"] = "Suscriptores";
+}
+<h1>Suscriptores (@Model.Contacts.Count)</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Estado</th>
+            <th>Suscripto</th>
+            <th>Baja</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var contact in Model.Contacts)
+    {
+        <tr>
+            <td>@contact.Email</td>
+            <td>@(contact.Unsubscribed ? "Dado de baja" : "Activo")</td>
+            <td>@contact.SubscribedAt.ToLocalTime().ToString("g")</td>
+            <td>@(contact.UnsubscribedAt?.ToLocalTime().ToString("g") ?? "—")</td>
+        </tr>
+    }
+    </tbody>
+</table>

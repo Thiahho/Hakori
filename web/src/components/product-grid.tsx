@@ -3,14 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent } from "react";
-import { products, formatPrice } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/products";
+import { useCart } from "@/components/cart-provider";
 
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-
-export function ProductGrid() {
+export function ProductGrid({ products }: { products: Product[] }) {
+  const { addItem } = useCart();
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>(
     {},
   );
+  const [addingTo, setAddingTo] = useState<string | null>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -122,6 +123,18 @@ export function ProductGrid() {
         >
           {products.map((product) => {
             const selectedSize = selectedSizes[product.id];
+            const selectedVariant = product.variants.find((v) => v.size === selectedSize);
+
+            const handleAdd = async () => {
+              if (!selectedVariant) return;
+              setAddingTo(product.id);
+              try {
+                await addItem(selectedVariant.id, 1);
+              } finally {
+                setAddingTo(null);
+              }
+            };
+
             return (
               <article
                 key={product.id}
@@ -150,32 +163,39 @@ export function ProductGrid() {
                   <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-md border border-cream/25 bg-cream/10 px-3 py-2.5 text-[11px] uppercase tracking-widest text-cream backdrop-blur-md">
                     <button
                       type="button"
-                      disabled={!selectedSize}
+                      disabled={!selectedVariant || addingTo === product.id}
+                      onClick={handleAdd}
                       className="font-semibold disabled:text-cream/40"
                     >
-                      + Agregar
+                      {addingTo === product.id ? "..." : "+ Agregar"}
                     </button>
                     <div className="flex gap-2">
-                      {SIZES.map((size) => (
-                        <button
-                          key={size}
-                          type="button"
-                          onClick={() =>
-                            setSelectedSizes((prev) => ({
-                              ...prev,
-                              [product.id]: size,
-                            }))
-                          }
-                          aria-pressed={selectedSize === size}
-                          className={
-                            selectedSize === size
-                              ? "font-semibold text-cream underline underline-offset-4"
-                              : "text-cream/50 hover:text-cream"
-                          }
-                        >
-                          {size}
-                        </button>
-                      ))}
+                      {product.variants.map((variant) => {
+                        const outOfStock = variant.availableStock <= 0;
+                        return (
+                          <button
+                            key={variant.id}
+                            type="button"
+                            disabled={outOfStock}
+                            onClick={() =>
+                              setSelectedSizes((prev) => ({
+                                ...prev,
+                                [product.id]: variant.size,
+                              }))
+                            }
+                            aria-pressed={selectedSize === variant.size}
+                            className={
+                              outOfStock
+                                ? "text-cream/25 line-through"
+                                : selectedSize === variant.size
+                                  ? "font-semibold text-cream underline underline-offset-4"
+                                  : "text-cream/50 hover:text-cream"
+                            }
+                          >
+                            {variant.size}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

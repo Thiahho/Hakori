@@ -6,15 +6,17 @@ import { StorySection } from "@/components/story-section";
 import { FaqSection } from "@/components/faq-section";
 import { CommunitySection } from "@/components/community-section";
 import { SiteFooter } from "@/components/site-footer";
-import { products } from "@/lib/products";
+import { getProducts } from "@/lib/products";
 
-export default function Home() {
+export default async function Home() {
+  const products = await getProducts();
+
   return (
     <>
       <SiteHeader />
       <main>
         <HeroSection />
-        <ProductGrid />
+        <ProductGrid products={products} />
         <ManifestoSection />
         {products.map((product, i) => (
           <StorySection

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { unsubscribeEmail } from "@/lib/unsubscribe";
+import { unsubscribeEmail } from "@/lib/newsletter";
 
 type Status = "idle" | "submitting" | "success" | "error";
 

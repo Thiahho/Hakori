@@ -1,0 +1,23 @@
+@page
+@model HakoriCo.Api.Pages.Admin.LoginModel
+@{
+    ViewData["Title"] = "Ingresar";
+}
+<div class="card" style="max-width:360px;margin:60px auto;">
+    <h1 style="font-size:18px;margin-top:0;">Hakori Admin</h1>
+    @if (Model.Error is not null)
+    {
+        <div class="alert error">@Model.Error</div>
+    }
+    <form method="post">
+        <div class="field">
+            <label>Email</label>
+            <input type="email" asp-for="Email" required style="width:100%" autofocus />
+        </div>
+        <div class="field">
+            <label>Contraseña</label>
+            <input type="password" asp-for="Password" required style="width:100%" />
+        </div>
+        <button type="submit">Ingresar</button>
+    </form>
+</div>

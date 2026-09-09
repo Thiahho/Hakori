@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { formatPrice, type Product } from "@/lib/products";
-
-const SIZES = ["S", "M", "L"];
+import { useCart } from "@/components/cart-provider";
 
 function AccordionItem({
   title,
@@ -41,10 +41,41 @@ function AccordionItem({
 }
 
 export function ProductDetail({ product }: { product: Product }) {
+  const router = useRouter();
+  const { addItem } = useCart();
   const [activeImage, setActiveImage] = useState<"story" | "cutout">("story");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  const selectedVariant = product.variants.find((v) => v.size === selectedSize);
   const mainImage = activeImage === "story" ? product.storyImage : product.image;
+
+  async function handleAddToCart() {
+    if (!selectedVariant) return;
+    setAdding(true);
+    setError(null);
+    try {
+      await addItem(selectedVariant.id, 1);
+    } catch {
+      setError("No pudimos agregarlo al carrito. Probá de nuevo.");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleBuyNow() {
+    if (!selectedVariant) return;
+    setAdding(true);
+    setError(null);
+    try {
+      await addItem(selectedVariant.id, 1);
+      router.push("/carrito");
+    } catch {
+      setError("No pudimos agregarlo al carrito. Probá de nuevo.");
+      setAdding(false);
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
@@ -133,28 +164,35 @@ export function ProductDetail({ product }: { product: Product }) {
             Talle
           </p>
           <div className="flex flex-wrap gap-2">
-            {SIZES.map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setSelectedSize(size)}
-                aria-pressed={selectedSize === size}
-                className={`flex h-10 w-14 items-center justify-center border text-xs uppercase tracking-widest transition-colors ${
-                  selectedSize === size
-                    ? "border-ink bg-ink text-cream"
-                    : "border-ink/30 text-ink/70 hover:border-ink"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+            {product.variants.map((variant) => {
+              const outOfStock = variant.availableStock <= 0;
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  disabled={outOfStock}
+                  onClick={() => setSelectedSize(variant.size)}
+                  aria-pressed={selectedSize === variant.size}
+                  className={`flex h-10 w-14 items-center justify-center border text-xs uppercase tracking-widest transition-colors ${
+                    outOfStock
+                      ? "border-ink/10 text-ink/25 line-through"
+                      : selectedSize === variant.size
+                        ? "border-ink bg-ink text-cream"
+                        : "border-ink/30 text-ink/70 hover:border-ink"
+                  }`}
+                >
+                  {variant.size}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            disabled={!selectedSize}
+            disabled={!selectedVariant || adding}
+            onClick={handleAddToCart}
             className="w-full bg-ink py-4 text-xs uppercase tracking-[0.3em] text-cream transition-opacity hover:opacity-90 disabled:opacity-30"
           >
             + Agregar
@@ -162,11 +200,14 @@ export function ProductDetail({ product }: { product: Product }) {
 
           <button
             type="button"
-            disabled={!selectedSize}
+            disabled={!selectedVariant || adding}
+            onClick={handleBuyNow}
             className="flex w-full items-center justify-center gap-2 border border-ink/30 py-4 text-xs uppercase tracking-[0.3em] text-ink/70 transition-colors hover:border-ink hover:text-ink disabled:opacity-30"
           >
             PAGAR
           </button>
+
+          {error && <p className="text-xs text-accent">{error}</p>}
         </div>
 
         <div className="mt-2 border-t border-ink/15">
