@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const CONSENT_COOKIE = "hakori_cookie_consent";
@@ -19,6 +20,7 @@ function setCookie(name: string, value: string, days: number) {
 }
 
 export function CookieConsent() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,8 @@ export function CookieConsent() {
     setVisible(false);
   }
 
-  if (!visible) return null;
+  // Admin is an internal tool, not the public storefront this banner covers.
+  if (!visible || pathname.startsWith("/admin")) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-cream/10 bg-ink px-6 py-5 text-cream">

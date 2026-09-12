@@ -58,5 +58,7 @@ public static class ProductsEndpoints
         ToVariantDtos(product.Variants));
 
     private static List<ProductVariantDto> ToVariantDtos(IEnumerable<ProductVariant> variants) =>
-        variants.Select(v => new ProductVariantDto(v.Id, v.Size, v.Sku, v.Stock - v.Reserved)).ToList();
+        variants
+            .Select(v => new ProductVariantDto(v.Id, v.Size, v.Sku, v.Stock - v.Reserved, v.ChestCm, v.LengthCm, v.SleeveCm))
+            .ToList();
 }

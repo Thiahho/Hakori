@@ -5,6 +5,9 @@ export type ProductVariant = {
   size: string;
   sku: string;
   availableStock: number;
+  chestCm: number | null;
+  lengthCm: number | null;
+  sleeveCm: number | null;
 };
 
 export type Product = {

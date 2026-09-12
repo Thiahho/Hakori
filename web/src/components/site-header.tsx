@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CartBadge } from "@/components/cart-badge";
+import { AdminLink } from "@/components/admin-link";
 
 const NAV_LINKS = [
   { href: "/#drop", label: "Drop 001" },
@@ -44,7 +45,10 @@ export function SiteHeader() {
             priority
           />
         </Link>
-        <CartBadge />
+        <div className="flex items-center gap-4">
+          <AdminLink />
+          <CartBadge />
+        </div>
       </div>
     </header>
   );

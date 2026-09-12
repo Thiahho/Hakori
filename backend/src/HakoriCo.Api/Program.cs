@@ -60,21 +60,28 @@ builder.Services
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "hakori_admin";
-    options.LoginPath = "/Admin/Login";
-    options.AccessDeniedPath = "/Admin/Login";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
+
+    // The admin UI lives in Next.js now, not in server-rendered Razor pages,
+    // so an unauthenticated/unauthorized request is always a JSON API call
+    // (from Next.js' server, never a browser navigation) — respond with a
+    // plain status code instead of the default redirect-to-login-page HTML flow.
+    options.Events.OnRedirectToLogin = ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(AdminSeeder.AdminRole));
-});
-
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AuthorizeFolder("/Admin", "RequireAdminRole");
-    options.Conventions.AllowAnonymousToPage("/Admin/Login");
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -99,8 +106,7 @@ app.MapNewsletterEndpoints();
 app.MapCartEndpoints();
 app.MapOrdersEndpoints();
 app.MapPaymentWebhookEndpoint();
-app.MapAdminAuthEndpoints();
-app.MapRazorPages();
+app.MapAdminApiEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {

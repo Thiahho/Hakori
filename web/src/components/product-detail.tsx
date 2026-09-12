@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { formatPrice, type Product } from "@/lib/products";
 import { useCart } from "@/components/cart-provider";
+import { SizeGuideModal } from "@/components/size-guide-modal";
 
 function AccordionItem({
   title,
@@ -47,6 +48,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   const selectedVariant = product.variants.find((v) => v.size === selectedSize);
   const mainImage = activeImage === "story" ? product.storyImage : product.image;
@@ -160,9 +162,18 @@ export function ProductDetail({ product }: { product: Product }) {
         <p className="max-w-md text-sm text-ink/70">{product.storyText}</p>
 
         <div>
-          <p className="mb-3 text-xs uppercase tracking-widest text-ink/50">
-            Talle
-          </p>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs uppercase tracking-widest text-ink/50">
+              Talle
+            </p>
+            <button
+              type="button"
+              onClick={() => setSizeGuideOpen(true)}
+              className="text-xs uppercase tracking-widest text-ink/50 underline underline-offset-4 hover:text-ink"
+            >
+              Guía de talles
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {product.variants.map((variant) => {
               const outOfStock = variant.availableStock <= 0;
@@ -261,6 +272,8 @@ export function ProductDetail({ product }: { product: Product }) {
           ← Volver a la colección
         </Link>
       </div>
+
+      <SizeGuideModal product={product} open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
     </div>
   );
 }

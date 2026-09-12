@@ -34,6 +34,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<ProductVariant>(entity =>
         {
             entity.HasIndex(v => v.Sku).IsUnique();
+            entity.Property(v => v.ChestCm).HasPrecision(6, 2);
+            entity.Property(v => v.LengthCm).HasPrecision(6, 2);
+            entity.Property(v => v.SleeveCm).HasPrecision(6, 2);
             entity.HasOne(v => v.Product)
                 .WithMany(p => p.Variants)
                 .HasForeignKey(v => v.ProductId)
