@@ -2,6 +2,10 @@ namespace HakoriCo.Api.Admin.Dtos;
 
 public record AdminLoginRequest(string Email, string Password);
 
+public record CreateAdminUserRequest(string Email, string Password);
+
+public record AdminUserDto(Guid Id, string Email);
+
 public record AdminVariantDto(
     Guid Id,
     string Size,

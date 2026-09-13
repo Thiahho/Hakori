@@ -47,6 +47,22 @@ export function SiteHeader() {
         </Link>
         <div className="flex items-center gap-4">
           <AdminLink />
+          <Link
+            href="/admin/login"
+            aria-label="Iniciar sesión"
+            className="flex items-center gap-2 text-xs uppercase tracking-widest hover:opacity-70"
+          >
+            <span className="hidden sm:inline">Ingresar</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cream text-ink">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
+                <path
+                  fillRule="evenodd"
+                  d="M10 2a4 4 0 100 8 4 4 0 000-8zM3.5 16.25a6.5 6.5 0 0113 0v.25a.75.75 0 01-.75.75h-11.5a.75.75 0 01-.75-.75v-.25z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </span>
+          </Link>
           <CartBadge />
         </div>
       </div>

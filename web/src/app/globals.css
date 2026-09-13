@@ -58,3 +58,58 @@ body {
     transform: translateX(-100%);
   }
 }
+
+.falling-particle {
+  position: absolute;
+  animation: particle-fall var(--duration, 12s) linear var(--delay, 0s) infinite;
+  will-change: transform;
+}
+
+@keyframes particle-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--opacity, 0.7);
+  }
+  25% {
+    transform: translate3d(var(--drift), 25vh, 0) rotate(90deg);
+  }
+  50% {
+    transform: translate3d(calc(var(--drift) * -1), 50vh, 0) rotate(180deg);
+  }
+  75% {
+    transform: translate3d(var(--drift), 75vh, 0) rotate(270deg);
+  }
+  90% {
+    opacity: var(--opacity, 0.7);
+  }
+  100% {
+    transform: translate3d(0, 110vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.drifting-cloud {
+  position: absolute;
+  animation: cloud-drift var(--duration, 80s) linear var(--delay, 0s) infinite;
+  will-change: transform;
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translate3d(-30vw, 0, 0);
+  }
+  to {
+    transform: translate3d(130vw, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .falling-particle,
+  .drifting-cloud {
+    animation: none;
+    display: none;
+  }
+}

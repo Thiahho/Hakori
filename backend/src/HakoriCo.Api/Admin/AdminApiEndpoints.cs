@@ -23,6 +23,8 @@ public static class AdminApiEndpoints
 
         var group = app.MapGroup("/api/admin").RequireAuthorization("RequireAdminRole");
 
+        group.MapPost("/users", CreateAdminUser);
+
         group.MapGet("/products", GetProducts);
         group.MapGet("/products/{id:guid}", GetProduct);
         group.MapPost("/products", CreateProduct);
@@ -59,6 +61,39 @@ public static class AdminApiEndpoints
     {
         await signInManager.SignOutAsync();
         return Results.Ok(new { ok = true });
+    }
+
+    private static async Task<IResult> CreateAdminUser(CreateAdminUserRequest request, UserManager<AdminUser> userManager)
+    {
+        var email = request.Email.Trim();
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return Results.BadRequest(new { error = "Email y contraseña son obligatorios." });
+        }
+
+        if (await userManager.FindByEmailAsync(email) is not null)
+        {
+            return Results.Conflict(new { error = $"Ya existe un usuario con el email \"{email}\"." });
+        }
+
+        var user = new AdminUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+        };
+
+        var result = await userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+        {
+            var error = string.Join(" ", result.Errors.Select(e => e.Description));
+            return Results.BadRequest(new { error });
+        }
+
+        await userManager.AddToRoleAsync(user, AdminSeeder.AdminRole);
+
+        return Results.Created($"/api/admin/users/{user.Id}", new AdminUserDto(user.Id, user.Email));
     }
 
     private static async Task<IResult> GetProducts(AppDbContext db)

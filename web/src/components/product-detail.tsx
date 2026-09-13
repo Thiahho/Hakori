@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { formatPrice, type Product } from "@/lib/products";
 import { useCart } from "@/components/cart-provider";
 import { SizeGuideModal } from "@/components/size-guide-modal";
+import { KatanaSlashEffect } from "@/components/katana-slash-effect";
 
 function AccordionItem({
   title,
@@ -96,6 +97,7 @@ export function ProductDetail({ product }: { product: Product }) {
             }
             sizes="(min-width: 1024px) 50vw, 100vw"
           />
+          {product.slug === "katana-oversize" && <KatanaSlashEffect />}
         </div>
         <div className="mt-4 flex gap-3">
           <button

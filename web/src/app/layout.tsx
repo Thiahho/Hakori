@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { CookieConsent } from "@/components/cookie-consent";
 import { CartProvider } from "@/components/cart-provider";
+import { FallingEffects } from "@/components/falling-effects";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
           <CookieConsent />
         </CartProvider>
+        <FallingEffects />
       </body>
     </html>
   );
