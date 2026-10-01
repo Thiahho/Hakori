@@ -9,7 +9,7 @@ public interface IMercadoPagoClient
         string successUrl,
         string failureUrl,
         string pendingUrl,
-        string notificationUrl,
+        string? notificationUrl,
         CancellationToken ct = default);
 
     Task<MercadoPagoPaymentStatus?> GetPaymentAsync(long paymentId, CancellationToken ct = default);

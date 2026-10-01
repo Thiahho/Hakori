@@ -112,8 +112,19 @@ public class OrdersController(
         db.Orders.Add(order);
         await db.SaveChangesAsync(ct);
 
-        var siteUrl = (config["SiteUrl"] ?? "https://hakori.co").TrimEnd('/');
-        var apiPublicUrl = (config["ApiPublicUrl"] ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/');
+        // appsettings.json ships these keys as "", so a plain ?? never falls back.
+        var siteUrl = (string.IsNullOrWhiteSpace(config["SiteUrl"]) ? "https://hakori.co" : config["SiteUrl"]!).TrimEnd('/');
+        var apiPublicUrl = (string.IsNullOrWhiteSpace(config["ApiPublicUrl"]) ? $"{Request.Scheme}://{Request.Host}" : config["ApiPublicUrl"]!).TrimEnd('/');
+
+        // MP accepts a preference with an unreachable notification_url but then
+        // fails the payment itself ("No pudimos procesar tu pago"), so on
+        // localhost we omit it — set ApiPublicUrl to a tunnel to test webhooks.
+        string? notificationUrl = $"{apiPublicUrl}/api/payments/webhook";
+        if (!Uri.TryCreate(notificationUrl, UriKind.Absolute, out var notificationUri) || notificationUri.IsLoopback)
+        {
+            logger.LogWarning("checkout: ApiPublicUrl no es una URL pública ({ApiPublicUrl}); la preferencia se crea sin notification_url.", apiPublicUrl);
+            notificationUrl = null;
+        }
 
         try
         {
@@ -122,7 +133,7 @@ public class OrdersController(
                 successUrl: $"{siteUrl}/checkout/exito?order={order.OrderNumber}",
                 failureUrl: $"{siteUrl}/checkout/error?order={order.OrderNumber}",
                 pendingUrl: $"{siteUrl}/checkout/pendiente?order={order.OrderNumber}",
-                notificationUrl: $"{apiPublicUrl}/api/payments/webhook",
+                notificationUrl: notificationUrl,
                 ct);
 
             order.MercadoPagoPreferenceId = preference.PreferenceId;

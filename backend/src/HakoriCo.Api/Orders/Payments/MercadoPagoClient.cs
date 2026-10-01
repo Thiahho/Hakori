@@ -22,7 +22,7 @@ public class MercadoPagoClient : IMercadoPagoClient
         string successUrl,
         string failureUrl,
         string pendingUrl,
-        string notificationUrl,
+        string? notificationUrl,
         CancellationToken ct = default)
     {
         // MP rejects negative line items, and spreading a discount across unit
