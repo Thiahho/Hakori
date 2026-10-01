@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getOrder } from "@/lib/cart";
+import { confirmOrder, getOrder, type Order } from "@/lib/cart";
 import { formatPrice } from "@/lib/products";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -10,18 +10,34 @@ const STATUS_LABELS: Record<string, string> = {
   Expired: "Expirada",
 };
 
+async function loadOrder(orderNumber: string, paymentId: string | undefined): Promise<Order | null> {
+  // MP sends payment_id=null when the buyer leaves without paying.
+  if (paymentId && /^\d+$/.test(paymentId)) {
+    const confirmed = await confirmOrder(orderNumber, paymentId).catch(() => null);
+    if (confirmed) return confirmed;
+  }
+  return getOrder(orderNumber).catch(() => null);
+}
+
 export async function OrderStatus({
   orderNumber,
+  paymentId,
   heading,
+  unpaidHeading,
 }: {
   orderNumber: string | undefined;
+  /** MercadoPago's payment_id from the return URL — lets us confirm without waiting for the webhook. */
+  paymentId?: string;
   heading: string;
+  /** Shown instead of `heading` while the order isn't confirmed as paid. */
+  unpaidHeading?: string;
 }) {
-  const order = orderNumber ? await getOrder(orderNumber).catch(() => null) : null;
+  const order = orderNumber ? await loadOrder(orderNumber, paymentId) : null;
+  const title = unpaidHeading && order?.status !== "Paid" ? unpaidHeading : heading;
 
   return (
     <main className="mx-auto max-w-lg px-6 pb-24 pt-40 text-center">
-      <h1 className="font-display text-3xl">{heading}</h1>
+      <h1 className="font-display text-3xl">{title}</h1>
 
       {order ? (
         <div className="mt-8 border border-ink/15 p-6 text-left">

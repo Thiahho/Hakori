@@ -16,6 +16,7 @@ public class OrdersController(
     StockService stockService,
     CouponService couponService,
     IMercadoPagoClient mercadoPago,
+    PaymentReconciler reconciler,
     IConfiguration config,
     ILogger<Order> logger) : ControllerBase
 {
@@ -162,12 +163,36 @@ public class OrdersController(
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, ct);
 
-        if (order is null)
+        return order is null ? NotFound() : Ok(ToDto(order));
+    }
+
+    /// <summary>
+    /// Called when the buyer lands back from MercadoPago with a payment_id, so
+    /// the order shows as paid right away instead of waiting for the webhook.
+    /// </summary>
+    [HttpPost("orders/{orderNumber}/confirm")]
+    public async Task<IActionResult> ConfirmOrder(string orderNumber, [FromQuery] long paymentId, CancellationToken ct)
+    {
+        try
         {
-            return NotFound();
+            await reconciler.ReconcileAsync(paymentId, orderNumber, ct);
+        }
+        catch (Exception ex)
+        {
+            // The webhook will still reconcile it; the buyer just sees the current state.
+            logger.LogWarning(ex, "orders/confirm: no se pudo verificar el pago {PaymentId} de {OrderNumber}.", paymentId, orderNumber);
         }
 
-        return Ok(new OrderDto(
+        var order = await db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, ct);
+
+        return order is null ? NotFound() : Ok(ToDto(order));
+    }
+
+    private static OrderDto ToDto(Order order)
+    {
+        return new OrderDto(
             order.OrderNumber,
             order.Status.ToString(),
             order.Email,
@@ -177,7 +202,7 @@ public class OrdersController(
             order.Total,
             order.CreatedAt,
             order.PaidAt,
-            order.Items.Select(i => new OrderItemDto(i.ProductName, i.Size, i.UnitPrice, i.Quantity)).ToList()));
+            order.Items.Select(i => new OrderItemDto(i.ProductName, i.Size, i.UnitPrice, i.Quantity)).ToList());
     }
 
     private static string GenerateOrderNumber()

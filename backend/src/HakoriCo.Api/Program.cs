@@ -45,6 +45,7 @@ builder.Services.AddScoped<StockService>();
 builder.Services.AddScoped<CouponService>();
 builder.Services.Configure<MercadoPagoOptions>(builder.Configuration.GetSection("MercadoPago"));
 builder.Services.AddScoped<IMercadoPagoClient, MercadoPagoClient>();
+builder.Services.AddScoped<PaymentReconciler>();
 builder.Services.AddHostedService<OrderExpirationService>();
 
 builder.Services

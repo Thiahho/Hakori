@@ -60,6 +60,16 @@ public class MercadoPagoClient : IMercadoPagoClient
             ExternalReference = order.OrderNumber,
         };
 
+        // Sends the buyer back to the site on approval without them clicking
+        // "Volver al sitio". MP rejects the whole preference if auto_return is
+        // set with a non-public success URL, so it's skipped on localhost.
+        if (Uri.TryCreate(successUrl, UriKind.Absolute, out var successUri)
+            && successUri.Scheme == Uri.UriSchemeHttps
+            && !successUri.IsLoopback)
+        {
+            request.AutoReturn = "approved";
+        }
+
         var client = new PreferenceClient();
         var preference = await client.CreateAsync(request);
 

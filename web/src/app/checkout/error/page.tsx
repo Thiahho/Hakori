@@ -5,14 +5,14 @@ import { OrderStatus } from "@/components/order-status";
 export default async function CheckoutErrorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{ order?: string; payment_id?: string }>;
 }) {
-  const { order } = await searchParams;
+  const { order, payment_id } = await searchParams;
 
   return (
     <>
       <SiteHeader />
-      <OrderStatus orderNumber={order} heading="El pago no se pudo completar" />
+      <OrderStatus orderNumber={order} paymentId={payment_id} heading="El pago no se pudo completar" />
       <SiteFooter />
     </>
   );

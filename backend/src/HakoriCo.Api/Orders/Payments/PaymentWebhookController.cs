@@ -1,8 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
-using HakoriCo.Api.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace HakoriCo.Api.Orders.Payments;
@@ -10,9 +8,7 @@ namespace HakoriCo.Api.Orders.Payments;
 [ApiController]
 [Route("api/payments/webhook")]
 public class PaymentWebhookController(
-    AppDbContext db,
-    IMercadoPagoClient mercadoPago,
-    StockService stockService,
+    PaymentReconciler reconciler,
     IOptions<MercadoPagoOptions> options,
     ILogger<Order> logger) : ControllerBase
 {
@@ -47,45 +43,7 @@ public class PaymentWebhookController(
             return BadRequest();
         }
 
-        // Never trust the notification payload's own status — always fetch the
-        // authoritative payment state from MercadoPago's API.
-        var payment = await mercadoPago.GetPaymentAsync(paymentId, ct);
-        if (payment?.ExternalReference is null)
-        {
-            return Ok();
-        }
-
-        var order = await db.Orders
-            .Include(o => o.Items)
-            .FirstOrDefaultAsync(o => o.OrderNumber == payment.ExternalReference, ct);
-
-        if (order is null)
-        {
-            logger.LogWarning("payments/webhook: no se encontró la orden {OrderNumber}.", payment.ExternalReference);
-            return Ok();
-        }
-
-        switch (payment.Status)
-        {
-            case "approved":
-                order.MercadoPagoPaymentId = payment.Id.ToString();
-                await stockService.ConfirmAndDecrementAsync(order.Id, ct);
-                break;
-
-            case "rejected" or "cancelled":
-                if (order.Status == OrderStatus.PendingPayment)
-                {
-                    await stockService.ReleaseReservationAsync(order, ct);
-                    order.Status = OrderStatus.Cancelled;
-                    order.MercadoPagoPaymentId = payment.Id.ToString();
-                    await db.SaveChangesAsync(ct);
-                }
-                break;
-
-            default:
-                // pending / in_process / etc. — nothing to do yet, MP will notify again.
-                break;
-        }
+        await reconciler.ReconcileAsync(paymentId, expectedOrderNumber: null, ct);
 
         return Ok();
     }

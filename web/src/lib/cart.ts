@@ -103,3 +103,11 @@ export function getOrder(orderNumber: string): Promise<Order> {
     cache: "no-store",
   });
 }
+
+/** Has the backend verify the payment with MercadoPago and returns the updated order. */
+export function confirmOrder(orderNumber: string, paymentId: string): Promise<Order> {
+  return apiJson<Order>(
+    `/api/orders/${encodeURIComponent(orderNumber)}/confirm?paymentId=${encodeURIComponent(paymentId)}`,
+    { method: "POST", cache: "no-store" },
+  );
+}
