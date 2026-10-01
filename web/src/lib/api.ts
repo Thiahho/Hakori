@@ -1,4 +1,8 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5207";
+// In the browser, requests go to this site's own /api/* (proxied to the backend
+// by the rewrite in next.config.ts); on the server there is no origin to be
+// relative to, so we hit the backend directly.
+export const API_URL =
+  typeof window === "undefined" ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5207") : "";
 
 export class ApiError extends Error {
   constructor(
