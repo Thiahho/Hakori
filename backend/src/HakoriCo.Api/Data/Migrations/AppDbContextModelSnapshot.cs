@@ -93,6 +93,9 @@ namespace HakoriCo.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CouponId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -104,6 +107,8 @@ namespace HakoriCo.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("Token")
                         .IsUnique();
@@ -133,6 +138,51 @@ namespace HakoriCo.Api.Data.Migrations
                     b.HasIndex("ProductVariantId");
 
                     b.ToTable("CartItems");
+                });
+
+            modelBuilder.Entity("HakoriCo.Api.Coupons.Coupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("OnePerEmail")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Coupons");
                 });
 
             modelBuilder.Entity("HakoriCo.Api.Newsletter.Contact", b =>
@@ -171,8 +221,18 @@ namespace HakoriCo.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CouponCode")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("CouponId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -217,11 +277,17 @@ namespace HakoriCo.Api.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();
@@ -364,6 +430,65 @@ namespace HakoriCo.Api.Data.Migrations
                     b.ToTable("ProductVariants");
                 });
 
+            modelBuilder.Entity("HakoriCo.Api.Products.SizeChart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("SizeCharts");
+                });
+
+            modelBuilder.Entity("HakoriCo.Api.Products.SizeChartRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ChestCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<int>("CurveUnits")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("LengthCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<string>("Size")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SizeChartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("SleeveCm")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SizeChartId");
+
+                    b.ToTable("SizeChartRow");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
@@ -494,6 +619,16 @@ namespace HakoriCo.Api.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("HakoriCo.Api.Cart.Cart", b =>
+                {
+                    b.HasOne("HakoriCo.Api.Coupons.Coupon", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Coupon");
+                });
+
             modelBuilder.Entity("HakoriCo.Api.Cart.CartItem", b =>
                 {
                     b.HasOne("HakoriCo.Api.Cart.Cart", "Cart")
@@ -511,6 +646,14 @@ namespace HakoriCo.Api.Data.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("HakoriCo.Api.Orders.Order", b =>
+                {
+                    b.HasOne("HakoriCo.Api.Coupons.Coupon", null)
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("HakoriCo.Api.Orders.OrderItem", b =>
@@ -533,6 +676,17 @@ namespace HakoriCo.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("HakoriCo.Api.Products.SizeChartRow", b =>
+                {
+                    b.HasOne("HakoriCo.Api.Products.SizeChart", "SizeChart")
+                        .WithMany("Rows")
+                        .HasForeignKey("SizeChartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SizeChart");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -599,6 +753,11 @@ namespace HakoriCo.Api.Data.Migrations
             modelBuilder.Entity("HakoriCo.Api.Products.Product", b =>
                 {
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("HakoriCo.Api.Products.SizeChart", b =>
+                {
+                    b.Navigation("Rows");
                 });
 #pragma warning restore 612, 618
         }

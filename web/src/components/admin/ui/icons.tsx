@@ -39,6 +39,24 @@ export function MailIcon(props: IconProps) {
   );
 }
 
+export function TagIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.5 12.1V4.5a1 1 0 0 1 1-1h7.6a1 1 0 0 1 .7.3l8 8a1 1 0 0 1 0 1.4l-7.6 7.6a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1-.3-.7Z" />
+      <circle cx="8" cy="8" r="1.4" />
+    </svg>
+  );
+}
+
+export function RulerIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.7 15.6 15.6 3.7a1 1 0 0 1 1.4 0l3.3 3.3a1 1 0 0 1 0 1.4L8.4 20.3a1 1 0 0 1-1.4 0L3.7 17a1 1 0 0 1 0-1.4Z" />
+      <path d="m7.5 11.8 2 2M10.3 9l1.5 1.5M13.1 6.2l2 2" />
+    </svg>
+  );
+}
+
 export function PlusIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

@@ -35,8 +35,23 @@ public class StockService(AppDbContext db)
         return true;
     }
 
+    /// <summary>
+    /// Undoes a checkout's reservations: variant stock and, if the order used one,
+    /// the coupon use taken at checkout. Every cancellation path (MP failure,
+    /// rejected webhook, admin cancel, expiration sweep) goes through here.
+    /// </summary>
     public async Task ReleaseReservationAsync(Order order, CancellationToken ct)
     {
+        if (order.CouponId is { } couponId)
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                UPDATE "Coupons"
+                SET "UsedCount" = GREATEST(0, "UsedCount" - 1)
+                WHERE "Id" = {couponId}
+                """, ct);
+        }
+
         foreach (var item in order.Items)
         {
             await db.Database.ExecuteSqlInterpolatedAsync(

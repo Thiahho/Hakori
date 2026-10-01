@@ -3,8 +3,10 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import {
   addCartItem,
+  applyCoupon as applyCouponRequest,
   getCart,
   removeCartItem,
+  removeCoupon as removeCouponRequest,
   updateCartItem,
   type Cart,
 } from "@/lib/cart";
@@ -15,10 +17,20 @@ type CartContextValue = {
   addItem: (productVariantId: string, quantity?: number) => Promise<void>;
   updateItem: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
+  applyCoupon: (code: string) => Promise<void>;
+  removeCoupon: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
-const EMPTY_CART: Cart = { items: [], itemCount: 0, total: 0 };
+const EMPTY_CART: Cart = {
+  items: [],
+  itemCount: 0,
+  subtotal: 0,
+  discount: 0,
+  total: 0,
+  couponCode: null,
+  couponError: null,
+};
 
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -50,8 +62,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(next);
   }, []);
 
+  const applyCoupon = useCallback(async (code: string) => {
+    const next = await applyCouponRequest(code);
+    setCart(next);
+  }, []);
+
+  const removeCoupon = useCallback(async () => {
+    const next = await removeCouponRequest();
+    setCart(next);
+  }, []);
+
   return (
-    <CartContext.Provider value={{ cart, loading, addItem, updateItem, removeItem, refresh }}>
+    <CartContext.Provider value={{ cart, loading, addItem, updateItem, removeItem, applyCoupon, removeCoupon, refresh }}>
       {children}
     </CartContext.Provider>
   );

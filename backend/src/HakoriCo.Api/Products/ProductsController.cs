@@ -1,34 +1,34 @@
 using HakoriCo.Api.Data;
 using HakoriCo.Api.Products.Dtos;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HakoriCo.Api.Products;
 
-public static class ProductsEndpoints
+[ApiController]
+[Route("api/products")]
+public class ProductsController(AppDbContext db) : ControllerBase
 {
-    public static void MapProductsEndpoints(this IEndpointRouteBuilder app)
+    [HttpGet]
+    public async Task<IActionResult> GetProducts()
     {
-        var group = app.MapGroup("/api/products");
+        var products = await db.Products
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SortOrder)
+            .Include(p => p.Variants)
+            .ToListAsync();
 
-        group.MapGet("", async (AppDbContext db) =>
-        {
-            var products = await db.Products
-                .Where(p => p.IsActive)
-                .OrderBy(p => p.SortOrder)
-                .Include(p => p.Variants)
-                .ToListAsync();
+        return Ok(products.Select(ToListItemDto));
+    }
 
-            return Results.Ok(products.Select(ToListItemDto));
-        });
+    [HttpGet("{slug}")]
+    public async Task<IActionResult> GetProduct(string slug)
+    {
+        var product = await db.Products
+            .Include(p => p.Variants)
+            .FirstOrDefaultAsync(p => p.Slug == slug && p.IsActive);
 
-        group.MapGet("/{slug}", async (string slug, AppDbContext db) =>
-        {
-            var product = await db.Products
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Slug == slug && p.IsActive);
-
-            return product is null ? Results.NotFound() : Results.Ok(ToDetailDto(product));
-        });
+        return product is null ? NotFound() : Ok(ToDetailDto(product));
     }
 
     private static ProductListItemDto ToListItemDto(Product product) => new(
@@ -59,6 +59,7 @@ public static class ProductsEndpoints
 
     private static List<ProductVariantDto> ToVariantDtos(IEnumerable<ProductVariant> variants) =>
         variants
+            .OrderBy(v => SizeOrder.Index(v.Size)).ThenBy(v => v.Size)
             .Select(v => new ProductVariantDto(v.Id, v.Size, v.Sku, v.Stock - v.Reserved, v.ChestCm, v.LengthCm, v.SleeveCm))
             .ToList();
 }

@@ -3,6 +3,7 @@
 import { deleteProductAction } from "@/lib/admin/products-actions";
 import { TrashIcon } from "./ui/icons";
 import { Button } from "./ui/button";
+import { ConfirmSubmitForm } from "./ui/confirm-submit-form";
 
 export function DeleteProductForm({
   id,
@@ -14,12 +15,13 @@ export function DeleteProductForm({
   variant?: "icon" | "button";
 }) {
   return (
-    <form
+    <ConfirmSubmitForm
       action={deleteProductAction}
-      onSubmit={(e) => {
-        if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`)) {
-          e.preventDefault();
-        }
+      confirm={{
+        title: "Eliminar producto",
+        message: `¿Eliminar "${name}"? Esta acción no se puede deshacer.`,
+        confirmLabel: "Eliminar",
+        tone: "danger",
       }}
     >
       <input type="hidden" name="id" value={id} />
@@ -38,6 +40,6 @@ export function DeleteProductForm({
           Eliminar
         </Button>
       )}
-    </form>
+    </ConfirmSubmitForm>
   );
 }

@@ -3,16 +3,24 @@
 import { useActionState } from "react";
 import { updateProductAction, type ProductFormState } from "@/lib/admin/products-actions";
 import type { AdminProduct } from "@/lib/admin/products";
+import type { AdminSizeChart } from "@/lib/admin/size-charts";
+import { SizeCurveEditor } from "./size-curve-editor";
 import { Card, CardHeader } from "./ui/card";
 import { Field, inputClass } from "./ui/field";
 import { Alert } from "./ui/alert";
 import { Button, LinkButton } from "./ui/button";
 
 const initialState: ProductFormState = {};
-const tableInputClass =
-  "w-20 rounded-md border border-neutral-300 px-2 py-1.5 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
 
-export function EditProductForm({ product, saved }: { product: AdminProduct; saved: boolean }) {
+export function EditProductForm({
+  product,
+  saved,
+  sizeCharts,
+}: {
+  product: AdminProduct;
+  saved: boolean;
+  sizeCharts: AdminSizeChart[];
+}) {
   const action = updateProductAction.bind(null, product.id);
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -80,73 +88,12 @@ export function EditProductForm({ product, saved }: { product: AdminProduct; sav
         </div>
       </Card>
 
-      <Card>
-        <CardHeader title="Talles y stock" description="Stock y medidas por talle (cm)." />
-        <div className="overflow-x-auto p-5">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 text-xs uppercase tracking-wide text-neutral-500">
-                <th className="py-2 pr-2 font-medium">Talle</th>
-                <th className="py-2 pr-2 font-medium">SKU</th>
-                <th className="py-2 pr-2 font-medium">Stock</th>
-                <th className="py-2 pr-2 font-medium">Pecho (cm)</th>
-                <th className="py-2 pr-2 font-medium">Largo (cm)</th>
-                <th className="py-2 font-medium">Manga (cm)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {product.variants.map((variant) => (
-                <tr key={variant.id} className="border-b border-neutral-50 last:border-0">
-                  <td className="py-2.5 pr-2 font-medium text-neutral-700">{variant.size}</td>
-                  <td className="py-2.5 pr-2 font-mono text-xs text-neutral-500">{variant.sku}</td>
-                  <td className="py-2.5 pr-2">
-                    <input
-                      type="number"
-                      name={`stock_${variant.id}`}
-                      min="0"
-                      defaultValue={variant.stock}
-                      className={tableInputClass}
-                    />
-                  </td>
-                  <td className="py-2.5 pr-2">
-                    <input
-                      type="number"
-                      name={`chest_${variant.id}`}
-                      min="0"
-                      step="0.1"
-                      placeholder="—"
-                      defaultValue={variant.chestCm ?? ""}
-                      className={tableInputClass}
-                    />
-                  </td>
-                  <td className="py-2.5 pr-2">
-                    <input
-                      type="number"
-                      name={`length_${variant.id}`}
-                      min="0"
-                      step="0.1"
-                      placeholder="—"
-                      defaultValue={variant.lengthCm ?? ""}
-                      className={tableInputClass}
-                    />
-                  </td>
-                  <td className="py-2.5">
-                    <input
-                      type="number"
-                      name={`sleeve_${variant.id}`}
-                      min="0"
-                      step="0.1"
-                      placeholder="—"
-                      defaultValue={variant.sleeveCm ?? ""}
-                      className={tableInputClass}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {/* Remount when variants change (sizes added/removed on save) so rows pick up new ids/SKUs. */}
+      <SizeCurveEditor
+        key={product.variants.map((v) => v.id).join(",")}
+        sizeCharts={sizeCharts}
+        variants={product.variants}
+      />
 
       <div className="flex items-center gap-3">
         <Button type="submit" variant="primary" disabled={pending}>

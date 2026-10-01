@@ -1,13 +1,24 @@
 import Link from "next/link";
 import { logoutAction } from "@/lib/admin/auth-actions";
 import { NavLink } from "@/components/admin/ui/nav-link";
-import { BoxIcon, ExternalLinkIcon, LogOutIcon, MailIcon, ReceiptIcon } from "@/components/admin/ui/icons";
+import { DialogProvider } from "@/components/admin/ui/dialog-provider";
+import {
+  BoxIcon,
+  ExternalLinkIcon,
+  LogOutIcon,
+  MailIcon,
+  ReceiptIcon,
+  RulerIcon,
+  TagIcon,
+} from "@/components/admin/ui/icons";
 
 export const metadata = { title: "Hakori Admin" };
 
 const NAV_ITEMS = [
   { href: "/admin/products", label: "Productos", icon: <BoxIcon className="h-4.5 w-4.5" /> },
+  { href: "/admin/size-charts", label: "Plantillas de talles", icon: <RulerIcon className="h-4.5 w-4.5" /> },
   { href: "/admin/orders", label: "Órdenes", icon: <ReceiptIcon className="h-4.5 w-4.5" /> },
+  { href: "/admin/coupons", label: "Cupones", icon: <TagIcon className="h-4.5 w-4.5" /> },
   { href: "/admin/subscribers", label: "Suscriptores", icon: <MailIcon className="h-4.5 w-4.5" /> },
 ];
 
@@ -93,7 +104,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       </div>
 
       <main className="flex-1 px-4 py-8 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-5xl">{children}</div>
+        <div className="mx-auto max-w-5xl">
+          <DialogProvider>{children}</DialogProvider>
+        </div>
       </main>
     </div>
   );

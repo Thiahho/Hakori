@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useCart } from "@/components/cart-provider";
 import { formatPrice } from "@/lib/products";
 import { checkout, type CheckoutRequest } from "@/lib/cart";
+import { ApiError } from "@/lib/api";
 
 const EMPTY_SHIPPING: CheckoutRequest = {
   email: "",
@@ -19,10 +20,32 @@ const EMPTY_SHIPPING: CheckoutRequest = {
 };
 
 export default function CartPage() {
-  const { cart, loading, updateItem, removeItem } = useCart();
+  const { cart, loading, updateItem, removeItem, applyCoupon, removeCoupon } = useCart();
   const [shipping, setShipping] = useState<CheckoutRequest>(EMPTY_SHIPPING);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [couponFormError, setCouponFormError] = useState<string | null>(null);
+
+  async function handleApplyCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+    setCouponFormError(null);
+    try {
+      await applyCoupon(couponCode.trim());
+      setCouponCode("");
+    } catch (err) {
+      setCouponFormError(
+        err instanceof ApiError && err.status === 400
+          ? err.message
+          : "No pudimos aplicar el cupón. Probá de nuevo.",
+      );
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }
 
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault();
@@ -31,9 +54,12 @@ export default function CartPage() {
     try {
       const result = await checkout(shipping);
       window.location.href = result.initPoint;
-    } catch {
+    } catch (err) {
+      // 400/409 carry a specific, user-facing message (stock, coupon, missing data).
       setError(
-        "No pudimos iniciar el pago. Revisá tus datos y probá de nuevo en unos minutos.",
+        err instanceof ApiError && (err.status === 400 || err.status === 409)
+          ? err.message
+          : "No pudimos iniciar el pago. Revisá tus datos y probá de nuevo en unos minutos.",
       );
       setSubmitting(false);
     }
@@ -96,6 +122,57 @@ export default function CartPage() {
                   </div>
                 </div>
               ))}
+              {cart.couponCode ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">
+                      Cupón <span className="text-ink">{cart.couponCode}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeCoupon()}
+                      className="text-xs uppercase tracking-widest text-ink/50 underline underline-offset-4 hover:text-ink"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  {cart.couponError && <p className="text-xs text-accent">{cart.couponError}</p>}
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="flex flex-col gap-2">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Código de descuento"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="flex-1 border border-ink/20 bg-transparent px-3 py-2 text-sm uppercase outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={applyingCoupon || !couponCode.trim()}
+                      className="border border-ink px-4 text-xs uppercase tracking-widest transition-opacity hover:opacity-70 disabled:opacity-40"
+                    >
+                      {applyingCoupon ? "..." : "Aplicar"}
+                    </button>
+                  </div>
+                  {couponFormError && <p className="text-xs text-accent">{couponFormError}</p>}
+                </form>
+              )}
+
+              {cart.discount > 0 && (
+                <div className="flex flex-col gap-1 text-sm">
+                  <div className="flex items-baseline justify-between text-ink/60">
+                    <span className="uppercase tracking-widest">Subtotal</span>
+                    <span>{formatPrice(cart.subtotal)}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between text-ink/60">
+                    <span className="uppercase tracking-widest">Descuento</span>
+                    <span>−{formatPrice(cart.discount)}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-baseline justify-between pt-2">
                 <span className="text-sm uppercase tracking-widest">Total</span>
                 <span className="text-xl">{formatPrice(cart.total)}</span>

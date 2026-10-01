@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "secondary" | "destructive" | "ghost";
+type Variant = "primary" | "secondary" | "destructive" | "danger" | "ghost";
 type Size = "sm" | "md";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-ink text-white hover:opacity-90 disabled:opacity-40",
   secondary: "border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-50 disabled:opacity-40",
   destructive: "text-rose-700 hover:bg-rose-50 disabled:opacity-40",
+  danger: "bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40",
   ghost: "text-neutral-600 hover:bg-neutral-100 disabled:opacity-40",
 };
 

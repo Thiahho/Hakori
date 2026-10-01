@@ -43,6 +43,7 @@ public class CartAccessor
         }
 
         var cart = await db.Carts
+            .Include(c => c.Coupon)
             .Include(c => c.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v.Product)
             .FirstOrDefaultAsync(c => c.Token == token && c.ExpiresAt > DateTimeOffset.UtcNow, ct);
 
@@ -60,6 +61,7 @@ public class CartAccessor
     public async Task<Cart> ReloadAsync(Guid cartId, AppDbContext db, CancellationToken ct)
     {
         return await db.Carts
+            .Include(c => c.Coupon)
             .Include(c => c.Items).ThenInclude(i => i.ProductVariant).ThenInclude(v => v.Product)
             .FirstAsync(c => c.Id == cartId, ct);
     }

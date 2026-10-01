@@ -15,7 +15,13 @@ export type CartItem = {
 export type Cart = {
   items: CartItem[];
   itemCount: number;
+  subtotal: number;
+  discount: number;
+  /** Subtotal minus discount — what the buyer will be charged. */
   total: number;
+  couponCode: string | null;
+  /** Set when the applied coupon no longer applies (discount is then 0). */
+  couponError: string | null;
 };
 
 export function getCart(): Promise<Cart> {
@@ -38,6 +44,17 @@ export function updateCartItem(itemId: string, quantity: number): Promise<Cart> 
 
 export function removeCartItem(itemId: string): Promise<Cart> {
   return apiJson<Cart>(`/api/cart/items/${itemId}`, { method: "DELETE" });
+}
+
+export function applyCoupon(code: string): Promise<Cart> {
+  return apiJson<Cart>("/api/cart/coupon", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+export function removeCoupon(): Promise<Cart> {
+  return apiJson<Cart>("/api/cart/coupon", { method: "DELETE" });
 }
 
 export type CheckoutRequest = {
@@ -72,6 +89,9 @@ export type Order = {
   orderNumber: string;
   status: string;
   email: string;
+  subtotal: number;
+  discountAmount: number;
+  couponCode: string | null;
   total: number;
   createdAt: string;
   paidAt: string | null;

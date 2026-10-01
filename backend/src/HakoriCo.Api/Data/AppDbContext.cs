@@ -1,4 +1,5 @@
 using HakoriCo.Api.Admin.Identity;
+using HakoriCo.Api.Coupons;
 using HakoriCo.Api.Newsletter;
 using HakoriCo.Api.Orders;
 using HakoriCo.Api.Products;
@@ -20,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<SizeChart> SizeCharts => Set<SizeChart>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -51,6 +54,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<CartAggregate>(entity =>
         {
             entity.HasIndex(c => c.Token).IsUnique();
+            entity.HasOne(c => c.Coupon)
+                .WithMany()
+                .HasForeignKey(c => c.CouponId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<CartItem>(entity =>
@@ -70,6 +77,35 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             entity.HasIndex(o => o.OrderNumber).IsUnique();
             entity.Property(o => o.Total).HasPrecision(10, 2);
+            entity.Property(o => o.Subtotal).HasPrecision(10, 2);
+            entity.Property(o => o.DiscountAmount).HasPrecision(10, 2);
+            entity.HasOne<Coupon>()
+                .WithMany()
+                .HasForeignKey(o => o.CouponId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<SizeChart>(entity =>
+        {
+            entity.HasIndex(c => c.Name).IsUnique();
+        });
+
+        builder.Entity<SizeChartRow>(entity =>
+        {
+            entity.Property(r => r.ChestCm).HasPrecision(6, 2);
+            entity.Property(r => r.LengthCm).HasPrecision(6, 2);
+            entity.Property(r => r.SleeveCm).HasPrecision(6, 2);
+            entity.HasOne(r => r.SizeChart)
+                .WithMany(c => c.Rows)
+                .HasForeignKey(r => r.SizeChartId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Coupon>(entity =>
+        {
+            entity.HasIndex(c => c.Code).IsUnique();
+            entity.Property(c => c.Value).HasPrecision(10, 2);
+            entity.Property(c => c.DiscountType).HasConversion<string>().HasMaxLength(20);
         });
 
         builder.Entity<OrderItem>(entity =>

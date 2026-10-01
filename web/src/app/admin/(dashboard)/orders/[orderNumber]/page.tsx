@@ -81,7 +81,30 @@ export default async function AdminOrderDetailPage({ params }: PageProps<"/admin
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-neutral-100">
+                  {order.discountAmount > 0 && (
+                    <>
+                      <tr className="border-t border-neutral-100">
+                        <td colSpan={3} className="px-5 pt-3 text-right text-sm text-neutral-500">
+                          Subtotal
+                        </td>
+                        <td className="px-5 pt-3 text-right text-sm tabular-nums text-neutral-700">
+                          {formatPrice(order.subtotal)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="px-5 pt-1 text-right text-sm text-neutral-500">
+                          Descuento
+                          {order.couponCode && (
+                            <span className="ml-1 font-mono text-xs text-neutral-700">({order.couponCode})</span>
+                          )}
+                        </td>
+                        <td className="px-5 pt-1 text-right text-sm tabular-nums text-emerald-700">
+                          −{formatPrice(order.discountAmount)}
+                        </td>
+                      </tr>
+                    </>
+                  )}
+                  <tr className={order.discountAmount > 0 ? "" : "border-t border-neutral-100"}>
                     <td colSpan={3} className="px-5 py-3 text-right text-sm font-medium text-neutral-500">
                       Total
                     </td>

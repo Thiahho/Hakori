@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { CreateProductForm } from "@/components/admin/create-product-form";
+import { getAdminSizeCharts } from "@/lib/admin/size-charts";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { ChevronLeftIcon } from "@/components/admin/ui/icons";
 
 export const metadata = { title: "Nuevo producto · Hakori Admin" };
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  const sizeCharts = await getAdminSizeCharts();
+
   return (
     <div>
       <Link
@@ -16,7 +19,7 @@ export default function NewProductPage() {
         Productos
       </Link>
       <PageHeader title="Nuevo producto" />
-      <CreateProductForm />
+      <CreateProductForm sizeCharts={sizeCharts} />
     </div>
   );
 }

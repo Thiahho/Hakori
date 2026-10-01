@@ -4,28 +4,20 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { AdminApiError, adminJson } from "./api";
 import type { AdminProduct } from "./products";
-import { STANDARD_SIZES } from "./product-constants";
+import { parseVariantRows } from "./form-utils";
 
 export type ProductFormState = { error?: string };
-
-function parseOptionalDecimal(value: FormDataEntryValue | null): number | null {
-  if (value === null) return null;
-  const trimmed = String(value).trim();
-  if (trimmed === "") return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export async function createProductAction(
   _prevState: ProductFormState,
   formData: FormData,
 ): Promise<ProductFormState> {
-  const variants = STANDARD_SIZES.filter((size) => formData.get(`included_${size}`) === "on").map((size) => ({
-    size,
-    stock: Math.max(0, Number(formData.get(`stock_${size}`) ?? 0)),
-    chestCm: parseOptionalDecimal(formData.get(`chest_${size}`)),
-    lengthCm: parseOptionalDecimal(formData.get(`length_${size}`)),
-    sleeveCm: parseOptionalDecimal(formData.get(`sleeve_${size}`)),
+  const variants = parseVariantRows(formData).map((row) => ({
+    size: row.size,
+    stock: row.stock,
+    chestCm: row.chestCm,
+    lengthCm: row.lengthCm,
+    sleeveCm: row.sleeveCm,
   }));
 
   const body = {
@@ -66,19 +58,9 @@ export async function updateProductAction(
   _prevState: ProductFormState,
   formData: FormData,
 ): Promise<ProductFormState> {
-  const variants: { id: string; stock: number; chestCm: number | null; lengthCm: number | null; sleeveCm: number | null }[] = [];
-  for (const [key, value] of formData.entries()) {
-    if (key.startsWith("stock_")) {
-      const variantId = key.slice("stock_".length);
-      variants.push({
-        id: variantId,
-        stock: Math.max(0, Number(value)),
-        chestCm: parseOptionalDecimal(formData.get(`chest_${variantId}`)),
-        lengthCm: parseOptionalDecimal(formData.get(`length_${variantId}`)),
-        sleeveCm: parseOptionalDecimal(formData.get(`sleeve_${variantId}`)),
-      });
-    }
-  }
+  // The full set of sizes the product should have: rows with an id update that
+  // variant, rows without one are new sizes, and missing sizes get removed.
+  const variants = parseVariantRows(formData);
 
   const body = {
     index: String(formData.get("index") ?? "").trim(),

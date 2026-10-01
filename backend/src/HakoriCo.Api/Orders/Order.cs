@@ -13,7 +13,16 @@ public class Order
     public string ShippingPostalCode { get; set; } = "";
     public string ShippingPhone { get; set; } = "";
 
+    public decimal Subtotal { get; set; }
+    public decimal DiscountAmount { get; set; }
+
+    /// <summary>Subtotal - DiscountAmount: what the buyer is charged.</summary>
     public decimal Total { get; set; }
+
+    public Guid? CouponId { get; set; }
+
+    /// <summary>Snapshot of the code, kept even if the coupon is later deleted.</summary>
+    public string? CouponCode { get; set; }
 
     public string? MercadoPagoPreferenceId { get; set; }
     public string? MercadoPagoPaymentId { get; set; }

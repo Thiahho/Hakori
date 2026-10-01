@@ -1,42 +1,36 @@
 using System.Text.RegularExpressions;
 using HakoriCo.Api.Data;
 using HakoriCo.Api.Newsletter.Dtos;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HakoriCo.Api.Newsletter;
 
-public static partial class NewsletterEndpoints
+[ApiController]
+[Route("api/newsletter")]
+public partial class NewsletterController(
+    AppDbContext db,
+    IResendClient resend,
+    IConfiguration config,
+    ILogger<Contact> logger) : ControllerBase
 {
     private const string GenericSubscribeError = "No pudimos procesar tu suscripción. Probá de nuevo en unos minutos.";
     private const string GenericUnsubscribeError = "No pudimos procesar tu baja. Probá de nuevo en unos minutos.";
     private const string InvalidEmailError = "Ingresá un email válido.";
 
-    public static void MapNewsletterEndpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api/newsletter");
-
-        group.MapPost("/subscribe", Subscribe);
-        group.MapPost("/unsubscribe", Unsubscribe);
-    }
-
-    private static async Task<IResult> Subscribe(
-        SubscribeRequest request,
-        AppDbContext db,
-        IResendClient resend,
-        IConfiguration config,
-        ILogger<Contact> logger,
-        CancellationToken ct)
+    [HttpPost("subscribe")]
+    public async Task<IActionResult> Subscribe(SubscribeRequest request, CancellationToken ct)
     {
         // Campo trampa para bots: si viene completo, fingimos éxito sin hacer nada.
         if (!string.IsNullOrEmpty(request.Honeypot))
         {
-            return Results.Ok(new NewsletterResult(true));
+            return Ok(new NewsletterResult(true));
         }
 
         var email = NormalizeEmail(request.Email);
         if (!EmailRegex().IsMatch(email))
         {
-            return Results.Ok(new NewsletterResult(false, InvalidEmailError));
+            return Ok(new NewsletterResult(false, InvalidEmailError));
         }
 
         try
@@ -100,26 +94,22 @@ public static partial class NewsletterEndpoints
                 }
             }
 
-            return Results.Ok(new NewsletterResult(true));
+            return Ok(new NewsletterResult(true));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "subscribe: error inesperado al procesar {Email}.", email);
-            return Results.Ok(new NewsletterResult(false, GenericSubscribeError));
+            return Ok(new NewsletterResult(false, GenericSubscribeError));
         }
     }
 
-    private static async Task<IResult> Unsubscribe(
-        UnsubscribeRequest request,
-        AppDbContext db,
-        IResendClient resend,
-        ILogger<Contact> logger,
-        CancellationToken ct)
+    [HttpPost("unsubscribe")]
+    public async Task<IActionResult> Unsubscribe(UnsubscribeRequest request, CancellationToken ct)
     {
         var email = NormalizeEmail(request.Email);
         if (!EmailRegex().IsMatch(email))
         {
-            return Results.Ok(new NewsletterResult(false, InvalidEmailError));
+            return Ok(new NewsletterResult(false, InvalidEmailError));
         }
 
         try
@@ -143,12 +133,12 @@ public static partial class NewsletterEndpoints
                 logger.LogError(ex, "unsubscribe: no se pudo espejar la baja en Resend para {Email}.", email);
             }
 
-            return Results.Ok(new NewsletterResult(true));
+            return Ok(new NewsletterResult(true));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "unsubscribe: error inesperado al procesar {Email}.", email);
-            return Results.Ok(new NewsletterResult(false, GenericUnsubscribeError));
+            return Ok(new NewsletterResult(false, GenericUnsubscribeError));
         }
     }
 

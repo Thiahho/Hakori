@@ -24,6 +24,9 @@ export type AdminOrder = {
   shippingCity: string;
   shippingPostalCode: string;
   shippingPhone: string;
+  subtotal: number;
+  discountAmount: number;
+  couponCode: string | null;
   total: number;
   mercadoPagoPreferenceId: string | null;
   mercadoPagoPaymentId: string | null;

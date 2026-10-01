@@ -1,12 +1,11 @@
-using HakoriCo.Api.Admin;
 using HakoriCo.Api.Admin.Identity;
 using HakoriCo.Api.Cart;
+using HakoriCo.Api.Coupons;
 using HakoriCo.Api.Data;
 using HakoriCo.Api.Data.Seed;
 using HakoriCo.Api.Newsletter;
 using HakoriCo.Api.Orders;
 using HakoriCo.Api.Orders.Payments;
-using HakoriCo.Api.Products;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,6 +42,7 @@ builder.Services.AddHttpClient<IResendClient, ResendClient>(client =>
 
 builder.Services.AddScoped<CartAccessor>();
 builder.Services.AddScoped<StockService>();
+builder.Services.AddScoped<CouponService>();
 builder.Services.Configure<MercadoPagoOptions>(builder.Configuration.GetSection("MercadoPago"));
 builder.Services.AddScoped<IMercadoPagoClient, MercadoPagoClient>();
 builder.Services.AddHostedService<OrderExpirationService>();
@@ -84,6 +84,14 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(AdminSeeder.AdminRole));
 });
 
+// With <Nullable>enable</Nullable>, MVC would treat every non-nullable string in the
+// request records as [Required] and short-circuit with a generic 400 ProblemDetails;
+// the actions do their own validation and return Spanish, user-facing messages.
+// Bare NotFound()/BadRequest() keep an empty body instead of a ProblemDetails payload.
+builder.Services.AddControllers(options =>
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true)
+    .ConfigureApiBehaviorOptions(options => options.SuppressMapClientErrors = true);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -101,12 +109,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health");
-app.MapProductsEndpoints();
-app.MapNewsletterEndpoints();
-app.MapCartEndpoints();
-app.MapOrdersEndpoints();
-app.MapPaymentWebhookEndpoint();
-app.MapAdminApiEndpoints();
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {

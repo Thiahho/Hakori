@@ -1,34 +1,31 @@
 using System.Security.Cryptography;
 using System.Text;
 using HakoriCo.Api.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace HakoriCo.Api.Orders.Payments;
 
-public static class PaymentWebhookEndpoint
+[ApiController]
+[Route("api/payments/webhook")]
+public class PaymentWebhookController(
+    AppDbContext db,
+    IMercadoPagoClient mercadoPago,
+    StockService stockService,
+    IOptions<MercadoPagoOptions> options,
+    ILogger<Order> logger) : ControllerBase
 {
-    public static void MapPaymentWebhookEndpoint(this IEndpointRouteBuilder app)
+    [HttpPost]
+    public async Task<IActionResult> HandleWebhook(CancellationToken ct)
     {
-        app.MapPost("/api/payments/webhook", HandleWebhook);
-    }
-
-    private static async Task<IResult> HandleWebhook(
-        HttpContext ctx,
-        AppDbContext db,
-        IMercadoPagoClient mercadoPago,
-        StockService stockService,
-        IOptions<MercadoPagoOptions> options,
-        ILogger<Order> logger,
-        CancellationToken ct)
-    {
-        var dataId = ctx.Request.Query["data.id"].ToString();
-        var requestId = ctx.Request.Headers["x-request-id"].ToString();
-        var signatureHeader = ctx.Request.Headers["x-signature"].ToString();
+        var dataId = Request.Query["data.id"].ToString();
+        var requestId = Request.Headers["x-request-id"].ToString();
+        var signatureHeader = Request.Headers["x-signature"].ToString();
 
         if (string.IsNullOrEmpty(dataId))
         {
-            return Results.BadRequest();
+            return BadRequest();
         }
 
         var webhookSecret = options.Value.WebhookSecret;
@@ -37,7 +34,7 @@ public static class PaymentWebhookEndpoint
             if (!IsSignatureValid(signatureHeader, dataId, requestId, webhookSecret))
             {
                 logger.LogWarning("payments/webhook: firma inválida para data.id={DataId}.", dataId);
-                return Results.Unauthorized();
+                return Unauthorized();
             }
         }
         else
@@ -47,7 +44,7 @@ public static class PaymentWebhookEndpoint
 
         if (!long.TryParse(dataId, out var paymentId))
         {
-            return Results.BadRequest();
+            return BadRequest();
         }
 
         // Never trust the notification payload's own status — always fetch the
@@ -55,7 +52,7 @@ public static class PaymentWebhookEndpoint
         var payment = await mercadoPago.GetPaymentAsync(paymentId, ct);
         if (payment?.ExternalReference is null)
         {
-            return Results.Ok();
+            return Ok();
         }
 
         var order = await db.Orders
@@ -65,7 +62,7 @@ public static class PaymentWebhookEndpoint
         if (order is null)
         {
             logger.LogWarning("payments/webhook: no se encontró la orden {OrderNumber}.", payment.ExternalReference);
-            return Results.Ok();
+            return Ok();
         }
 
         switch (payment.Status)
@@ -90,7 +87,7 @@ public static class PaymentWebhookEndpoint
                 break;
         }
 
-        return Results.Ok();
+        return Ok();
     }
 
     private static bool IsSignatureValid(string signatureHeader, string dataId, string requestId, string secret)

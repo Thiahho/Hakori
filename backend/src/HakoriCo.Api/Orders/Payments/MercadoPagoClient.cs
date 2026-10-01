@@ -25,15 +25,31 @@ public class MercadoPagoClient : IMercadoPagoClient
         string notificationUrl,
         CancellationToken ct = default)
     {
-        var request = new PreferenceRequest
-        {
-            Items = order.Items.Select(item => new PreferenceItemRequest
+        // MP rejects negative line items, and spreading a discount across unit
+        // prices causes rounding drift — so a discounted order goes as a single
+        // line for the exact total. The itemized detail stays on the Order.
+        List<PreferenceItemRequest> items = order.DiscountAmount > 0
+            ?
+            [
+                new PreferenceItemRequest
+                {
+                    Title = $"Pedido {order.OrderNumber} (cupón {order.CouponCode})",
+                    Quantity = 1,
+                    CurrencyId = "ARS",
+                    UnitPrice = order.Total,
+                },
+            ]
+            : order.Items.Select(item => new PreferenceItemRequest
             {
                 Title = $"{item.ProductName} - Talle {item.Size}",
                 Quantity = item.Quantity,
                 CurrencyId = "ARS",
                 UnitPrice = item.UnitPrice,
-            }).ToList(),
+            }).ToList();
+
+        var request = new PreferenceRequest
+        {
+            Items = items,
             BackUrls = new PreferenceBackUrlsRequest
             {
                 Success = successUrl,

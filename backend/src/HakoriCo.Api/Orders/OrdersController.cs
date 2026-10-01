@@ -1,32 +1,29 @@
 using HakoriCo.Api.Cart;
+using HakoriCo.Api.Coupons;
 using HakoriCo.Api.Data;
 using HakoriCo.Api.Orders.Dtos;
 using HakoriCo.Api.Orders.Payments;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HakoriCo.Api.Orders;
 
-public static class OrdersEndpoints
+[ApiController]
+[Route("api")]
+public class OrdersController(
+    AppDbContext db,
+    CartAccessor carts,
+    StockService stockService,
+    CouponService couponService,
+    IMercadoPagoClient mercadoPago,
+    IConfiguration config,
+    ILogger<Order> logger) : ControllerBase
 {
     private const string OrderNumberChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static readonly TimeSpan PendingPaymentTtl = TimeSpan.FromMinutes(30);
 
-    public static void MapOrdersEndpoints(this IEndpointRouteBuilder app)
-    {
-        app.MapPost("/api/checkout", Checkout);
-        app.MapGet("/api/orders/{orderNumber}", GetOrder);
-    }
-
-    private static async Task<IResult> Checkout(
-        CheckoutRequest request,
-        HttpContext ctx,
-        AppDbContext db,
-        CartAccessor carts,
-        StockService stockService,
-        IMercadoPagoClient mercadoPago,
-        IConfiguration config,
-        ILogger<Order> logger,
-        CancellationToken ct)
+    [HttpPost("checkout")]
+    public async Task<IActionResult> Checkout(CheckoutRequest request, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Email)
             || string.IsNullOrWhiteSpace(request.ShippingName)
@@ -35,20 +32,40 @@ public static class OrdersEndpoints
             || string.IsNullOrWhiteSpace(request.ShippingPostalCode)
             || string.IsNullOrWhiteSpace(request.ShippingPhone))
         {
-            return Results.BadRequest(new { error = "Completá todos los datos de envío." });
+            return BadRequest(new { error = "Completá todos los datos de envío." });
         }
 
-        var cart = await carts.GetExistingCartAsync(ctx, db, ct);
+        var cart = await carts.GetExistingCartAsync(HttpContext, db, ct);
         if (cart is null || cart.Items.Count == 0)
         {
-            return Results.BadRequest(new { error = "Tu carrito está vacío." });
+            return BadRequest(new { error = "Tu carrito está vacío." });
+        }
+
+        var subtotal = cart.Items.Sum(i => i.ProductVariant.Product.Price * i.Quantity);
+        decimal discount = 0;
+        var coupon = cart.Coupon;
+
+        if (coupon is not null)
+        {
+            var evaluation = CouponService.Evaluate(coupon, subtotal, DateTimeOffset.UtcNow);
+            if (!evaluation.Valid)
+            {
+                return BadRequest(new { error = evaluation.Error });
+            }
+
+            if (coupon.OnePerEmail && await couponService.HasEmailUsedAsync(coupon.Id, request.Email, ct))
+            {
+                return BadRequest(new { error = "Ya usaste este cupón." });
+            }
+
+            discount = evaluation.Discount;
         }
 
         var reserveItems = cart.Items.Select(i => (i.ProductVariantId, i.Quantity)).ToList();
         var reserved = await stockService.TryReserveAsync(reserveItems, ct);
         if (!reserved)
         {
-            return Results.Conflict(new { error = "Uno de los productos ya no tiene stock suficiente." });
+            return Conflict(new { error = "Uno de los productos ya no tiene stock suficiente." });
         }
 
         var order = new Order
@@ -74,13 +91,29 @@ public static class OrdersEndpoints
                 Quantity = i.Quantity,
             }).ToList(),
         };
-        order.Total = order.Items.Sum(i => i.UnitPrice * i.Quantity);
+        order.Subtotal = subtotal;
+        order.Total = subtotal;
+
+        if (coupon is not null)
+        {
+            if (!await couponService.TryConsumeAsync(coupon.Id, ct))
+            {
+                // CouponId is still null here, so this only releases the stock.
+                await stockService.ReleaseReservationAsync(order, ct);
+                return Conflict(new { error = "El cupón ya no está disponible." });
+            }
+
+            order.CouponId = coupon.Id;
+            order.CouponCode = coupon.Code;
+            order.DiscountAmount = discount;
+            order.Total = subtotal - discount;
+        }
 
         db.Orders.Add(order);
         await db.SaveChangesAsync(ct);
 
         var siteUrl = (config["SiteUrl"] ?? "https://hakori.co").TrimEnd('/');
-        var apiPublicUrl = (config["ApiPublicUrl"] ?? $"{ctx.Request.Scheme}://{ctx.Request.Host}").TrimEnd('/');
+        var apiPublicUrl = (config["ApiPublicUrl"] ?? $"{Request.Scheme}://{Request.Host}").TrimEnd('/');
 
         try
         {
@@ -94,9 +127,10 @@ public static class OrdersEndpoints
 
             order.MercadoPagoPreferenceId = preference.PreferenceId;
             db.CartItems.RemoveRange(cart.Items);
+            cart.CouponId = null;
             await db.SaveChangesAsync(ct);
 
-            return Results.Ok(new CheckoutResponse(order.OrderNumber, preference.InitPoint));
+            return Ok(new CheckoutResponse(order.OrderNumber, preference.InitPoint));
         }
         catch (Exception ex)
         {
@@ -106,11 +140,12 @@ public static class OrdersEndpoints
             order.Status = OrderStatus.Cancelled;
             await db.SaveChangesAsync(ct);
 
-            return Results.Problem("No pudimos iniciar el pago. Probá de nuevo en unos minutos.", statusCode: StatusCodes.Status502BadGateway);
+            return Problem("No pudimos iniciar el pago. Probá de nuevo en unos minutos.", statusCode: StatusCodes.Status502BadGateway);
         }
     }
 
-    private static async Task<IResult> GetOrder(string orderNumber, AppDbContext db, CancellationToken ct)
+    [HttpGet("orders/{orderNumber}")]
+    public async Task<IActionResult> GetOrder(string orderNumber, CancellationToken ct)
     {
         var order = await db.Orders
             .Include(o => o.Items)
@@ -118,13 +153,16 @@ public static class OrdersEndpoints
 
         if (order is null)
         {
-            return Results.NotFound();
+            return NotFound();
         }
 
-        return Results.Ok(new OrderDto(
+        return Ok(new OrderDto(
             order.OrderNumber,
             order.Status.ToString(),
             order.Email,
+            order.Subtotal,
+            order.DiscountAmount,
+            order.CouponCode,
             order.Total,
             order.CreatedAt,
             order.PaidAt,

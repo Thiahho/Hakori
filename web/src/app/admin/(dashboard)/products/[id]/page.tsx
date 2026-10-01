@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAdminProduct } from "@/lib/admin/products";
+import { getAdminSizeCharts } from "@/lib/admin/size-charts";
 import { EditProductForm } from "@/components/admin/edit-product-form";
 import { DeleteProductForm } from "@/components/admin/delete-product-form";
 import { PageHeader } from "@/components/admin/ui/page-header";
@@ -13,7 +14,7 @@ export default async function EditProductPage({
   const search = await searchParams;
   const saved = search.saved === "1";
 
-  const product = await getAdminProduct(id);
+  const [product, sizeCharts] = await Promise.all([getAdminProduct(id), getAdminSizeCharts()]);
 
   return (
     <div>
@@ -29,7 +30,7 @@ export default async function EditProductPage({
         description={`/${product.slug}`}
         action={<DeleteProductForm id={product.id} name={product.name} variant="button" />}
       />
-      <EditProductForm product={product} saved={saved} />
+      <EditProductForm product={product} saved={saved} sizeCharts={sizeCharts} />
     </div>
   );
 }
